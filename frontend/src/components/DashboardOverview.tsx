@@ -1,6 +1,7 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Wallet, CreditCard, PieChart, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, CreditCard, PieChart } from 'lucide-react';
+import { useExchangeRates, Currency } from '@/contexts/SettingsContext';
 
 interface OverviewProps {
     data: {
@@ -14,57 +15,72 @@ interface OverviewProps {
     };
 }
 
-const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
-};
-
 export function DashboardOverview({ data }: OverviewProps) {
+    const { convert, format } = useExchangeRates();
+
+    const formatValue = (value: { amount: number; currency: string }) => {
+        const sourceCurrency = (value.currency || 'USD') as Currency;
+        const converted = convert(value.amount, sourceCurrency);
+        return format(converted);
+    };
+
     const metrics = [
         {
             label: 'Total Balance',
-            value: formatCurrency(data.totalBalance.amount, data.totalBalance.currency),
-            icon: <Wallet size={24} />,
+            value: formatValue(data.totalBalance),
+            icon: <Wallet size={22} />,
             color: 'var(--accent-primary)',
         },
         {
             label: 'Monthly Income',
-            value: formatCurrency(data.monthlyIncome.amount, data.monthlyIncome.currency),
-            icon: <TrendingUp size={24} />,
+            value: formatValue(data.monthlyIncome),
+            icon: <TrendingUp size={22} />,
             color: 'var(--success)',
             change: '+12%',
             changeType: 'positive',
         },
         {
             label: 'Monthly Expenses',
-            value: formatCurrency(data.monthlyExpenses.amount, data.monthlyExpenses.currency),
-            icon: <CreditCard size={24} />,
+            value: formatValue(data.monthlyExpenses),
+            icon: <CreditCard size={22} />,
             color: 'var(--danger)',
             change: '+29.5%',
             changeType: 'negative',
         },
         {
             label: 'Savings Rate',
-            value: `${data.savingsRate}%`,
-            icon: <PieChart size={24} />,
-            color: 'var(--success)',
-            change: 'Good!',
-            changeType: 'positive',
+            value: `${data.savingsRate.toFixed(1)}%`,
+            icon: <PieChart size={22} />,
+            color: data.savingsRate > 20 ? 'var(--success)' : 'var(--warning)',
+            change: data.savingsRate > 20 ? 'Good!' : 'Improve',
+            changeType: data.savingsRate > 20 ? 'positive' : 'negative',
         },
     ];
 
     return (
         <>
             {metrics.map((metric, index) => (
-                <div key={metric.label} className="card metric-card animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <div
+                    key={metric.label}
+                    className="card metric-card animate-fade-in"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span className="label">{metric.label}</span>
                         <div style={{ color: metric.color }}>{metric.icon}</div>
                     </div>
                     <span className="value">{metric.value}</span>
                     {metric.change && (
-                        <span className={`change ${metric.changeType}`}>
-                            {metric.changeType === 'positive' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                            {metric.change}
+                        <span
+                            className="badge"
+                            style={{
+                                marginTop: 'var(--spacing-xs)',
+                                background: metric.changeType === 'positive' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                                color: metric.changeType === 'positive' ? 'var(--success)' : 'var(--danger)'
+                            }}
+                        >
+                            {metric.changeType === 'positive' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                            <span style={{ marginLeft: 4 }}>{metric.change}</span>
                         </span>
                     )}
                 </div>
