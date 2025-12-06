@@ -8,72 +8,146 @@ import { NudgesList } from '@/components/NudgesList';
 import { TransactionList } from '@/components/TransactionList';
 import { AccountsGrid } from '@/components/AccountsGrid';
 import { SustainabilityScore } from '@/components/SustainabilityScore';
-import { Wallet } from 'lucide-react';
-
-// Mock data for demonstration
-const mockData = {
-    overview: {
-        totalBalance: { amount: 5505, currency: 'USD' },
-        monthlyIncome: { amount: 4000, currency: 'USD' },
-        monthlyExpenses: { amount: 2850, currency: 'USD' },
-        monthlyNetCashFlow: { amount: 1150, currency: 'USD' },
-        savingsRate: 28.8,
-        accountsCount: 4,
-        transactionsCount: 127,
-    },
-    accounts: [
-        { id: '1', name: 'Maybank Savings', provider: 'BANK', balance: { amount: 5000, currency: 'USD' }, percentageOfTotal: 90.8 },
-        { id: '2', name: 'GrabPay Wallet', provider: 'GRABPAY', balance: { amount: 250, currency: 'USD' }, percentageOfTotal: 4.5 },
-        { id: '3', name: 'Touch \'n Go', provider: 'TNG', balance: { amount: 180, currency: 'USD' }, percentageOfTotal: 3.3 },
-        { id: '4', name: 'ShopeePay', provider: 'SHOPEEPAY', balance: { amount: 75, currency: 'USD' }, percentageOfTotal: 1.4 },
-    ],
-    spendingTrends: {
-        currentMonth: { month: '2024-01', totalAmount: 2850, count: 45 },
-        previousMonth: { month: '2023-12', totalAmount: 2200, count: 38 },
-        trend: 'increasing',
-        percentageChange: 29.5,
-        sixMonthHistory: [
-            { month: '2023-08', totalAmount: 1800, count: 32 },
-            { month: '2023-09', totalAmount: 2100, count: 35 },
-            { month: '2023-10', totalAmount: 1950, count: 33 },
-            { month: '2023-11', totalAmount: 2300, count: 40 },
-            { month: '2023-12', totalAmount: 2200, count: 38 },
-            { month: '2024-01', totalAmount: 2850, count: 45 },
-        ],
-    },
-    categories: [
-        { category: 'FOOD_DINING', totalAmount: 680, count: 28, percentage: 23.9 },
-        { category: 'SHOPPING', totalAmount: 520, count: 8, percentage: 18.2 },
-        { category: 'ENTERTAINMENT', totalAmount: 450, count: 12, percentage: 15.8 },
-        { category: 'TRANSPORTATION', totalAmount: 380, count: 22, percentage: 13.3 },
-        { category: 'GROCERIES', totalAmount: 320, count: 6, percentage: 11.2 },
-        { category: 'UTILITIES', totalAmount: 280, count: 4, percentage: 9.8 },
-        { category: 'OTHER', totalAmount: 220, count: 5, percentage: 7.7 },
-    ],
-    nudges: [
-        { id: '1', type: 'SPENDING_INCREASE', severity: 'WARNING', title: 'Food spending up 31%', message: 'Your Food & Dining spending increased by 31% compared to last month.', isRead: false },
-        { id: '2', type: 'ECO_SUGGESTION', severity: 'INFO', title: 'Go Green!', message: 'Only 18% of your transactions are eco-friendly. Consider choosing sustainable merchants.', isRead: false },
-        { id: '3', type: 'SAVING_OPPORTUNITY', severity: 'SUCCESS', title: 'Great savings rate!', message: "You're saving 28.8% of your income this month. Keep it up!", isRead: true },
-    ],
-    recentTransactions: [
-        { id: '1', merchantName: 'Nasi Lemak Corner', category: 'FOOD_DINING', amount: { amount: 12.50, currency: 'USD' }, type: 'EXPENSE', date: '2024-01-05' },
-        { id: '2', merchantName: 'Shell Petrol', category: 'TRANSPORTATION', amount: { amount: 45.00, currency: 'USD' }, type: 'EXPENSE', date: '2024-01-05' },
-        { id: '3', merchantName: 'Netflix', category: 'ENTERTAINMENT', amount: { amount: 15.99, currency: 'USD' }, type: 'EXPENSE', date: '2024-01-04', isRecurring: true },
-        { id: '4', merchantName: 'Jaya Grocer', category: 'GROCERIES', amount: { amount: 85.30, currency: 'USD' }, type: 'EXPENSE', date: '2024-01-04', isEcoFriendly: true },
-        { id: '5', merchantName: 'Salary', category: 'INCOME', amount: { amount: 3500, currency: 'USD' }, type: 'INCOME', date: '2024-01-01' },
-    ],
-    sustainability: {
-        overall: 62,
-        ecoFriendlyCount: 23,
-        totalTransactions: 127,
-        carbonFootprintEstimate: 45.2,
-        improvement: { trend: 'improving', percentage: 8.5 },
-    },
-};
+import { Wallet, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function HomePage() {
-    const [data, setData] = useState(mockData);
-    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch dashboard data from backend API
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Using Next.js API proxy (configured in next.config.js)
+            // This will proxy to http://localhost:3001/api/v1/dashboard
+            const response = await fetch('/api/dashboard');
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                // Transform API data to match component expectations
+                const transformedData = {
+                    overview: {
+                        totalBalance: { amount: result.data.overview.totalBalance, currency: 'USD' },
+                        monthlyIncome: { amount: result.data.overview.monthlyIncome, currency: 'USD' },
+                        monthlyExpenses: { amount: result.data.overview.monthlyExpenses, currency: 'USD' },
+                        monthlyNetCashFlow: { amount: result.data.overview.monthlyNetCashFlow, currency: 'USD' },
+                        savingsRate: result.data.overview.savingsRate,
+                        accountsCount: result.data.overview.accountsCount,
+                        transactionsCount: result.data.overview.transactionsCount,
+                    },
+                    accounts: result.data.accounts.map((acc: any) => ({
+                        id: acc.id,
+                        name: acc.name,
+                        provider: acc.provider,
+                        balance: { amount: acc.balance, currency: 'USD' },
+                        percentageOfTotal: acc.percentageOfTotal,
+                    })),
+                    categories: result.data.categories || [],
+                    sustainability: {
+                        overall: result.data.sustainability?.overall ?? 62,
+                        ecoFriendlyCount: result.data.sustainability?.ecoFriendlyCount ?? 0,
+                        totalTransactions: result.data.sustainability?.totalTransactions ?? 0,
+                        carbonFootprintEstimate: result.data.sustainability?.carbonFootprintEstimate ?? 0,
+                        improvement: result.data.sustainability?.improvement ?? { trend: 'stable', percentage: 0 },
+                    },
+                    recentTransactions: result.data.recentTransactions.map((tx: any) => ({
+                        id: tx.id,
+                        merchantName: tx.merchantName || 'Unknown',
+                        category: tx.category,
+                        amount: { amount: tx.amount, currency: 'USD' },
+                        type: tx.type,
+                        date: tx.date,
+                        isRecurring: tx.isRecurring,
+                        isEcoFriendly: tx.isEcoFriendly,
+                    })),
+                    // Mock spending trends for now (you can add this to backend later)
+                    spendingTrends: {
+                        currentMonth: { month: new Date().toISOString().slice(0, 7), totalAmount: result.data.overview.monthlyExpenses, count: result.data.overview.transactionsCount },
+                        previousMonth: { month: '2023-12', totalAmount: 2200, count: 38 },
+                        trend: 'increasing',
+                        percentageChange: 0,
+                        sixMonthHistory: [
+                            { month: '2023-08', totalAmount: 1800, count: 32 },
+                            { month: '2023-09', totalAmount: 2100, count: 35 },
+                            { month: '2023-10', totalAmount: 1950, count: 33 },
+                            { month: '2023-11', totalAmount: 2300, count: 40 },
+                            { month: '2023-12', totalAmount: 2200, count: 38 },
+                            { month: new Date().toISOString().slice(0, 7), totalAmount: result.data.overview.monthlyExpenses, count: result.data.overview.transactionsCount },
+                        ],
+                    },
+                    nudges: [],
+                };
+
+                setData(transformedData);
+            } else {
+                throw new Error('Invalid API response format');
+            }
+        } catch (err) {
+            console.error('Failed to fetch dashboard data:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch data on component mount
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <RefreshCw size={48} style={{ color: 'var(--accent-primary)', animation: 'spin 1s linear infinite' }} />
+                    <p style={{ marginTop: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div className="card" style={{ maxWidth: '500px', textAlign: 'center' }}>
+                    <AlertCircle size={48} style={{ color: 'var(--danger)', margin: '0 auto' }} />
+                    <h2 style={{ marginTop: 'var(--spacing-md)', color: 'var(--danger)' }}>Error Loading Dashboard</h2>
+                    <p style={{ marginTop: 'var(--spacing-sm)', color: 'var(--text-secondary)' }}>{error}</p>
+                    <p style={{ marginTop: 'var(--spacing-md)', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                        Make sure the backend server is running at <code>http://localhost:3001</code>
+                    </p>
+                    <button
+                        onClick={fetchDashboardData}
+                        style={{
+                            marginTop: 'var(--spacing-lg)',
+                            padding: 'var(--spacing-sm) var(--spacing-lg)',
+                            background: 'var(--accent-gradient)',
+                            border: 'none',
+                            borderRadius: 'var(--radius-md)',
+                            color: 'white',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Success state - render dashboard
+    if (!data) return null;
 
     return (
         <div className="container">
@@ -85,6 +159,24 @@ export default function HomePage() {
                     </h1>
                     <p className="subtitle">Personal Finance Dashboard for Malaysian Professionals</p>
                 </div>
+                <button
+                    onClick={fetchDashboardData}
+                    style={{
+                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                        background: 'var(--glass-bg)',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-xs)',
+                    }}
+                    title="Refresh data"
+                >
+                    <RefreshCw size={16} />
+                    Refresh
+                </button>
             </header>
 
             <div className="dashboard-grid" style={{ marginBottom: 'var(--spacing-xl)' }}>
@@ -97,7 +189,7 @@ export default function HomePage() {
                     <CategoryBreakdown data={data.categories} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                    <NudgesList nudges={data.nudges} />
+                    {data.nudges.length > 0 && <NudgesList nudges={data.nudges} />}
                     <SustainabilityScore data={data.sustainability} />
                 </div>
             </div>
@@ -113,3 +205,4 @@ export default function HomePage() {
         </div>
     );
 }
+
