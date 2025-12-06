@@ -1,23 +1,46 @@
 /**
  * Currency Service
- * Handles currency conversion and exchange rates
+ * Handles currency conversion and exchange rates with caching and API support
+ * Uses shared CurrencyUtils for fallback rates
  */
 
 import { injectable } from "tsyringe";
 import { Money } from "../../domain/value-objects/Money.js";
 import { Logger } from "../../shared/Logger.js";
-import axios from "axios";
 import {
-  Currency,
-  CurrencyInfo,
-  ExchangeRate,
-  SUPPORTED_CURRENCIES,
-  FALLBACK_RATES,
+  getFallbackRate,
   isValidCurrency,
-} from "../../../../shared/types/currency.js";
+  SUPPORTED_CURRENCY_CODES,
+  type Currency,
+} from "../../shared/CurrencyUtils.js";
+import axios from "axios";
 
-// Re-export for backward compatibility
-export type { Currency, CurrencyInfo, ExchangeRate };
+// Re-export types for backward compatibility
+export type { Currency };
+
+export interface CurrencyInfo {
+  code: Currency;
+  name: string;
+  symbol: string;
+  locale?: string;
+}
+
+export interface ExchangeRate {
+  from: Currency;
+  to: Currency;
+  rate: number;
+  timestamp: Date;
+}
+
+const CURRENCY_INFO: CurrencyInfo[] = [
+  { code: "USD", name: "US Dollar", symbol: "$", locale: "en-US" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", locale: "ms-MY" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$", locale: "en-SG" },
+  { code: "EUR", name: "Euro", symbol: "€", locale: "de-DE" },
+  { code: "GBP", name: "British Pound", symbol: "£", locale: "en-GB" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥", locale: "ja-JP" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦", locale: "en-NG" },
+];
 
 @injectable()
 export class CurrencyService {
@@ -27,8 +50,13 @@ export class CurrencyService {
 
   constructor(private logger: Logger) {}
 
+  /**
+   * Get exchange rate between two currencies
+   * Uses cache first, then API, then fallback rates
+   */
   async getExchangeRate(from: string, to: string): Promise<number> {
     if (from === to) return 1.0;
+
     const cacheKey = `${from}_${to}`;
     const cached = this.rateCache.get(cacheKey);
     if (cached && cached.expiresAt > new Date()) return cached.rate;
@@ -41,30 +69,52 @@ export class CurrencyService {
       });
       return rate;
     } catch {
-      return this.getFallbackRate(from, to);
+      // Use shared fallback rate utility
+      const rate = getFallbackRate(from, to);
+      if (!isValidCurrency(from)) {
+        this.logger.warn(`Invalid source currency: ${from}, using fallback`);
+      }
+      if (!isValidCurrency(to)) {
+        this.logger.warn(`Invalid target currency: ${to}, using fallback`);
+      }
+      return rate;
     }
   }
 
+  /**
+   * Convert a Money object to another currency
+   */
   async convert(money: Money, toCurrency: string): Promise<Money> {
     if (money.currency === toCurrency) return money;
     const rate = await this.getExchangeRate(money.currency, toCurrency);
     return money.convertTo(toCurrency, rate);
   }
 
+  /**
+   * Convert Money to the base currency (USD)
+   */
   async convertToBase(money: Money): Promise<Money> {
     return this.convert(money, this.BASE_CURRENCY);
   }
 
+  /**
+   * Get list of supported currencies
+   */
   getSupportedCurrencies(): CurrencyInfo[] {
-    return [...SUPPORTED_CURRENCIES];
+    return [...CURRENCY_INFO];
   }
 
+  /**
+   * Check if a currency code is supported
+   */
   isSupported(code: string): boolean {
-    return SUPPORTED_CURRENCIES.some((c) => c.code === code.toUpperCase());
+    return SUPPORTED_CURRENCY_CODES.includes(code.toUpperCase() as Currency);
   }
 
+  /**
+   * Fetch live exchange rate from API
+   */
   private async fetchExchangeRate(from: string, to: string): Promise<number> {
-    // Use the free v4 API which doesn't require an API key
     const apiUrl =
       process.env.CURRENCY_API_URL ??
       "https://api.exchangerate-api.com/v4/latest";
@@ -73,22 +123,9 @@ export class CurrencyService {
     throw new Error(`Rate not found for ${from} to ${to}`);
   }
 
-  private getFallbackRate(from: string, to: string): number {
-    // Validate currencies before using fallback rates
-    if (!isValidCurrency(from)) {
-      this.logger.warn(`Invalid source currency: ${from}, defaulting to USD`);
-      from = "USD";
-    }
-    if (!isValidCurrency(to)) {
-      this.logger.warn(`Invalid target currency: ${to}, defaulting to USD`);
-      to = "USD";
-    }
-
-    const fromToUsd = FALLBACK_RATES[from as Currency];
-    const toToUsd = FALLBACK_RATES[to as Currency];
-    return (1 / fromToUsd) * toToUsd;
-  }
-
+  /**
+   * Clear the rate cache
+   */
   clearCache(): void {
     this.rateCache.clear();
   }

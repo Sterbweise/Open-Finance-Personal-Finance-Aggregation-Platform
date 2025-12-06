@@ -1,5 +1,7 @@
 'use client';
 
+import { useExchangeRates } from '@/contexts/SettingsContext';
+
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     FOOD_DINING: { label: 'Food & Dining', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)' },
     GROCERIES: { label: 'Groceries', color: '#84cc16', bg: 'rgba(132, 204, 22, 0.15)' },
@@ -10,17 +12,32 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; bg: string
     OTHER: { label: 'Other', color: '#64748b', bg: 'rgba(100, 116, 139, 0.15)' },
 };
 
+// Support both legacy number format and new Money object format
+interface CategoryData {
+    category: string;
+    totalAmount: number | { amount: number; currency: string };
+    count?: number;
+    percentage: number;
+}
+
 interface CategoryBreakdownProps {
-    data: { category: string; totalAmount: number; count: number; percentage: number }[];
+    data: CategoryData[];
 }
 
 export function CategoryBreakdown({ data }: CategoryBreakdownProps) {
+    const { format } = useExchangeRates();
+
     return (
         <div className="card">
             <h3 style={{ marginBottom: 'var(--spacing-lg)' }}>Spending by Category</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 {data.map((cat) => {
                     const config = CATEGORY_CONFIG[cat.category] ?? CATEGORY_CONFIG.OTHER;
+                    // Handle both number and Money object formats
+                    const amount = typeof cat.totalAmount === 'number' 
+                        ? cat.totalAmount 
+                        : cat.totalAmount.amount;
+                    
                     return (
                         <div key={cat.category}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' }}>
@@ -29,7 +46,7 @@ export function CategoryBreakdown({ data }: CategoryBreakdownProps) {
                                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{config.label}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-                                    <span style={{ fontWeight: 600 }}>${cat.totalAmount.toLocaleString()}</span>
+                                    <span style={{ fontWeight: 600 }}>{format(amount)}</span>
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', width: '50px', textAlign: 'right' }}>
                                         {cat.percentage.toFixed(1)}%
                                     </span>

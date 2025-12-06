@@ -35,10 +35,10 @@ export default function HomePage() {
                 // Transform API data to match component expectations
                 const transformedData = {
                     overview: {
-                        totalBalance: { amount: result.data.overview.totalBalance, currency: 'USD' },
-                        monthlyIncome: { amount: result.data.overview.monthlyIncome, currency: 'USD' },
-                        monthlyExpenses: { amount: result.data.overview.monthlyExpenses, currency: 'USD' },
-                        monthlyNetCashFlow: { amount: result.data.overview.monthlyNetCashFlow, currency: 'USD' },
+                        totalBalance: result.data.overview.totalBalance || { amount: 0, currency: 'USD' },
+                        monthlyIncome: result.data.overview.monthlyIncome || { amount: 0, currency: 'USD' },
+                        monthlyExpenses: result.data.overview.monthlyExpenses || { amount: 0, currency: 'USD' },
+                        monthlyNetCashFlow: result.data.overview.monthlyNetCashFlow || { amount: 0, currency: 'USD' },
                         savingsRate: result.data.overview.savingsRate,
                         accountsCount: result.data.overview.accountsCount,
                         transactionsCount: result.data.overview.transactionsCount,
@@ -47,7 +47,10 @@ export default function HomePage() {
                         id: acc.id,
                         name: acc.name,
                         provider: acc.provider,
-                        balance: { amount: acc.balance, currency: 'USD' },
+                        // Original balance in account's currency
+                        balance: acc.balance || { amount: 0, currency: 'USD' },
+                        // Converted balance in user's preferred currency
+                        balanceConverted: acc.balanceConverted || acc.balance || { amount: 0, currency: 'USD' },
                         percentageOfTotal: acc.percentageOfTotal,
                     })),
                     categories: result.data.categories || [],
@@ -55,7 +58,7 @@ export default function HomePage() {
                         id: tx.id,
                         merchantName: tx.merchantName || 'Unknown',
                         category: tx.category,
-                        amount: { amount: tx.amount, currency: 'USD' },
+                        amount: tx.amount || { amount: 0, currency: 'USD' },
                         type: tx.type,
                         date: tx.date,
                         isRecurring: tx.isRecurring,
