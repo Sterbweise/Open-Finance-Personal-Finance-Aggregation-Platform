@@ -143,13 +143,13 @@ app.get('/api/v1/transactions', async (req, res) => {
 });
 
 // Nudges
-app.get('/api/v1/dashboard/nudges', async (req, res) => {
+app.get('/api/v1/dashboard/nudges', async (_req, res) => {
     try {
         const nudges = await prisma.nudge.findMany({ where: { isActive: true } });
         res.json({
             success: true,
             data: {
-                nudges: nudges.map(n => ({
+                nudges: nudges.map((n: any) => ({
                     id: n.id,
                     type: n.type,
                     severity: n.severity,
@@ -165,9 +165,80 @@ app.get('/api/v1/dashboard/nudges', async (req, res) => {
     }
 });
 
+// User Preferences
+let userPreferences = {
+    currency: 'USD',
+    enableNudges: true,
+    enableSustainability: true,
+    darkMode: true,
+    locale: 'en-MY',
+};
+
+app.get('/api/v1/users/me/preferences', (_req, res) => {
+    res.json({
+        success: true,
+        data: userPreferences,
+    });
+});
+
+app.put('/api/v1/users/me/preferences', (req, res) => {
+    try {
+        const { currency, enableNudges, enableSustainability, darkMode, locale } = req.body;
+
+        if (currency) userPreferences.currency = currency;
+        if (enableNudges !== undefined) userPreferences.enableNudges = enableNudges;
+        if (enableSustainability !== undefined) userPreferences.enableSustainability = enableSustainability;
+        if (darkMode !== undefined) userPreferences.darkMode = darkMode;
+        if (locale) userPreferences.locale = locale;
+
+        res.json({
+            success: true,
+            data: userPreferences,
+        });
+    } catch (error) {
+        logger.error('Preferences error', { error });
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+// User Profile
+let userProfile = {
+    id: '1',
+    email: 'demo@openfinance.my',
+    username: 'demo_user',
+    firstName: 'Ahmad',
+    lastName: 'Rahman',
+};
+
+app.get('/api/v1/users/me', (_req, res) => {
+    res.json({
+        success: true,
+        data: userProfile,
+    });
+});
+
+app.put('/api/v1/users/me', (req, res) => {
+    try {
+        const { firstName, lastName, email, username } = req.body;
+
+        if (firstName) userProfile.firstName = firstName;
+        if (lastName) userProfile.lastName = lastName;
+        if (email) userProfile.email = email;
+        if (username) userProfile.username = username;
+
+        res.json({
+            success: true,
+            data: userProfile,
+        });
+    } catch (error) {
+        logger.error('Profile update error', { error });
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
 // Error handler
-app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Unhandled error', { error: err.message, stack: err.stack, path: req.path });
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    logger.error('Unhandled error', { error: err.message, stack: err.stack });
     res.status(500).json({ success: false, error: 'Internal Server Error' });
 });
 
