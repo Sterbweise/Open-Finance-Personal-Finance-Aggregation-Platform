@@ -79,9 +79,11 @@ export function CategorySpendingPieChart({ data }: CategorySpendingPieChartProps
                                         const value = data.datasets[0].data[i] as number;
                                         const total = (data.datasets[0].data as number[]).reduce((a, b) => a + b, 0);
                                         const percentage = ((value / total) * 100).toFixed(0);
+                                        const bgColors = data.datasets[0].backgroundColor;
+                                        const fillStyle = Array.isArray(bgColors) ? bgColors[i] : bgColors;
                                         return {
                                             text: `${label} (${percentage}%)`,
-                                            fillStyle: data.datasets[0].backgroundColor?.[i] as string,
+                                            fillStyle: fillStyle as string,
                                             hidden: false,
                                             index: i,
                                         };

@@ -13,13 +13,14 @@ import {
     User,
     Menu,
     X,
+    LucideIcon,
 } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 
 interface NavItem {
     name: string;
     href: string;
-    icon: React.ComponentType<{ size?: number; className?: string }>;
+    icon: LucideIcon;
 }
 
 const navItems: NavItem[] = [
