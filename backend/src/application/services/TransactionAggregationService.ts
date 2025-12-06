@@ -8,9 +8,8 @@ import {
     Transaction,
     TransactionType,
     TransactionCategory,
-    TransactionProps
 } from '../../domain/entities/Transaction.js';
-import { Account, Provider } from '../../domain/entities/Account.js';
+import { Account } from '../../domain/entities/Account.js';
 import { DateRange } from '../../domain/value-objects/DateRange.js';
 import { Money } from '../../domain/value-objects/Money.js';
 import {

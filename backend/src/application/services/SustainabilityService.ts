@@ -7,7 +7,6 @@ import { injectable, inject } from 'tsyringe';
 import { Transaction, TransactionCategory } from '../../domain/entities/Transaction.js';
 import { DateRange } from '../../domain/value-objects/DateRange.js';
 import { ITransactionRepository, TRANSACTION_REPOSITORY } from '../../domain/repositories/ITransactionRepository.js';
-import { Logger } from '../../shared/Logger.js';
 
 export interface SustainabilityScore {
     overall: number;
@@ -52,7 +51,6 @@ export class SustainabilityService {
 
     constructor(
         @inject(TRANSACTION_REPOSITORY) private transactionRepo: ITransactionRepository,
-        private logger: Logger
     ) { }
 
     async calculateSustainabilityScore(userId: string, dateRange: DateRange): Promise<SustainabilityScore> {

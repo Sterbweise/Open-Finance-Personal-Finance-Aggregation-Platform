@@ -115,11 +115,21 @@ export class CurrencyService {
    * Fetch live exchange rate from API
    */
   private async fetchExchangeRate(from: string, to: string): Promise<number> {
-    const apiUrl =
-      process.env.CURRENCY_API_URL ??
-      "https://api.exchangerate-api.com/v4/latest";
+    // Prefer v6 endpoint with API key if provided; otherwise fall back to free v4
+    const apiKey = process.env.CURRENCY_API_KEY || "";
+    const baseUrlWithKey = apiKey
+      ? `https://v6.exchangerate-api.com/v6/${apiKey}/latest`
+      : "https://api.exchangerate-api.com/v4/latest";
+    const apiUrl = process.env.CURRENCY_API_URL ?? baseUrlWithKey;
+
+    // Exchangerate-api expects base currency in the URL
     const response = await axios.get(`${apiUrl}/${from}`, { timeout: 5000 });
-    if (response.data.rates?.[to]) return response.data.rates[to];
+    if (response.data?.conversion_rates?.[to]) {
+      return response.data.conversion_rates[to];
+    }
+    if (response.data?.rates?.[to]) {
+      return response.data.rates[to];
+    }
     throw new Error(`Rate not found for ${from} to ${to}`);
   }
 

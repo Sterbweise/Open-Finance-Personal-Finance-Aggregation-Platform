@@ -2,7 +2,7 @@
  * Transaction Controller
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { injectable, inject } from 'tsyringe';
 import { ITransactionRepository, TRANSACTION_REPOSITORY } from '../../domain/repositories/ITransactionRepository.js';
 import { Transaction, TransactionType, TransactionCategory } from '../../domain/entities/Transaction.js';

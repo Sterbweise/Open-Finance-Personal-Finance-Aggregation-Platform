@@ -106,15 +106,15 @@ async function seed() {
   // Create demo user with Malaysian preferences
   const passwordHash = await bcrypt.hash("demo123", 10);
   const user = await prisma.user.upsert({
-    where: { email: "demo@openfinance.my" },
+    where: { email: "demo@myduit.my" },
     update: {},
     create: {
       id: uuid(),
-      email: "demo@openfinance.my",
+      email: "demo@myduit.my",
       username: "demo_user",
       passwordHash,
-      firstName: "Ahmad",
-      lastName: "Rahman",
+      firstName: "MyDuit",
+      lastName: "Test",
       preferredCurrency: "MYR",
       locale: "en-MY",
       isActive: true,
@@ -125,6 +125,7 @@ async function seed() {
   console.log(`✅ Created user: ${user.email}`);
 
   // Create accounts - Malaysian banks and e-wallets use MYR
+  // More balanced distribution across providers
   const accounts = await Promise.all([
     prisma.account.create({
       data: {
@@ -134,7 +135,7 @@ async function seed() {
         accountType: AccountType.SAVINGS,
         provider: Provider.BANK,
         accountNumber: "1234567890",
-        balance: 22500, // ~5000 USD in MYR (1 USD ≈ 4.5 MYR)
+        balance: 8500, // RM 8,500 (~$1,900 USD)
         currency: "MYR",
         isActive: true,
       },
@@ -143,11 +144,11 @@ async function seed() {
       data: {
         id: uuid(),
         userId: user.id,
-        name: "GrabPay Wallet",
-        accountType: AccountType.EWALLET,
-        provider: Provider.GRABPAY,
-        accountNumber: "GP001",
-        balance: 1125, // ~250 USD in MYR
+        name: "RHB Current Account",
+        accountType: AccountType.CURRENT,
+        provider: Provider.BANK,
+        accountNumber: "9876543210",
+        balance: 6200, // RM 6,200 (~$1,387 USD)
         currency: "MYR",
         isActive: true,
       },
@@ -160,7 +161,7 @@ async function seed() {
         accountType: AccountType.EWALLET,
         provider: Provider.TNG,
         accountNumber: "TNG001",
-        balance: 810, // ~180 USD in MYR
+        balance: 850, // RM 850 (~$190 USD)
         currency: "MYR",
         isActive: true,
       },
@@ -169,11 +170,24 @@ async function seed() {
       data: {
         id: uuid(),
         userId: user.id,
-        name: "ShopeePay",
+        name: "Grab Wallet",
+        accountType: AccountType.EWALLET,
+        provider: Provider.GRABPAY,
+        accountNumber: "GP001",
+        balance: 720, // RM 720 (~$161 USD)
+        currency: "MYR",
+        isActive: true,
+      },
+    }),
+    prisma.account.create({
+      data: {
+        id: uuid(),
+        userId: user.id,
+        name: "Shopee Wallet",
         accountType: AccountType.EWALLET,
         provider: Provider.SHOPEEPAY,
         accountNumber: "SP001",
-        balance: 337.5, // ~75 USD in MYR
+        balance: 580, // RM 580 (~$130 USD)
         currency: "MYR",
         isActive: true,
       },
@@ -182,9 +196,17 @@ async function seed() {
 
   console.log(`✅ Created ${accounts.length} accounts`);
 
-  // Generate transactions for last 6 months
+  // Use consistent exchange rate derived from shared fallback rates
+  // FALLBACK_RATES.MYR = 4.47 (i.e., 4.47 MYR = 1 USD)
+  // So 1 MYR = 1 / 4.47 ≈ 0.22371 USD
+  const MYR_TO_USD_RATE = 1 / 4.47;
+
+  // Generate transactions for last 6 months with nice distribution
   const now = new Date();
   const transactions: any[] = [];
+
+  // More varied transaction counts per month for realistic patterns
+  const monthlyTxCounts = [45, 52, 48, 58, 51, 62]; // Different counts per month (6 months ago to now)
 
   for (let month = 5; month >= 0; month--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - month, 1);
@@ -194,8 +216,8 @@ async function seed() {
       0
     ).getDate();
 
-    // Generate 30-50 transactions per month
-    const txCount = Math.floor(Math.random() * 20) + 30;
+    // Use predefined transaction count for more varied monthly spending
+    const txCount = monthlyTxCounts[5 - month];
 
     for (let i = 0; i < txCount; i++) {
       const day = Math.floor(Math.random() * daysInMonth) + 1;
@@ -208,39 +230,56 @@ async function seed() {
         CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
       const merchants = MERCHANTS[category] ?? ["Unknown"];
       const merchant = merchants[Math.floor(Math.random() * merchants.length)];
-      const account = accounts[Math.floor(Math.random() * accounts.length)];
+
+      // Better distribution across all accounts (not just random)
+      let account;
+      if (category === TransactionCategory.TRANSPORTATION) {
+        // Transportation mostly on Touch N Go or Grab
+        account = Math.random() > 0.5 ? accounts[2] : accounts[3]; // TNG or Grab
+      } else if (category === TransactionCategory.SHOPPING) {
+        // Shopping often on Shopee wallet
+        account =
+          Math.random() > 0.6
+            ? accounts[4]
+            : accounts[Math.floor(Math.random() * 2)]; // Shopee or banks
+      } else if (category === TransactionCategory.FOOD_DINING) {
+        // Food split across e-wallets and banks
+        account = accounts[Math.floor(Math.random() * accounts.length)];
+      } else {
+        // Other categories distributed across all accounts
+        account = accounts[Math.floor(Math.random() * accounts.length)];
+      }
 
       // Generate amounts in MYR (Malaysian Ringgit)
-      // Typical Malaysian transaction amounts
+      // More realistic and varied Malaysian transaction amounts
       let amountMYR: number;
       switch (category) {
         case TransactionCategory.FOOD_DINING:
-          amountMYR = Math.random() * 135 + 22.5;
-          break; // ~RM 22-157 (~$5-35)
+          amountMYR = Math.random() * 50 + 10; // RM 10-60 (~$2-13)
+          break;
         case TransactionCategory.GROCERIES:
-          amountMYR = Math.random() * 360 + 90;
-          break; // ~RM 90-450 (~$20-100)
+          amountMYR = Math.random() * 120 + 30; // RM 30-150 (~$7-34)
+          break;
         case TransactionCategory.TRANSPORTATION:
-          amountMYR = Math.random() * 112.5 + 22.5;
-          break; // ~RM 22-135 (~$5-30)
+          amountMYR = Math.random() * 40 + 8; // RM 8-48 (~$2-11)
+          break;
         case TransactionCategory.ENTERTAINMENT:
-          amountMYR = Math.random() * 225 + 45;
-          break; // ~RM 45-270 (~$10-60)
+          amountMYR = Math.random() * 80 + 15; // RM 15-95 (~$3-21)
+          break;
         case TransactionCategory.SHOPPING:
-          amountMYR = Math.random() * 675 + 90;
-          break; // ~RM 90-765 (~$20-170)
+          amountMYR = Math.random() * 200 + 50; // RM 50-250 (~$11-56)
+          break;
         case TransactionCategory.UTILITIES:
-          amountMYR = Math.random() * 450 + 135;
-          break; // ~RM 135-585 (~$30-130)
+          amountMYR = Math.random() * 150 + 50; // RM 50-200 (~$11-45)
+          break;
         default:
-          amountMYR = Math.random() * 225 + 45;
+          amountMYR = Math.random() * 80 + 20; // RM 20-100
       }
 
       const isEcoFriendly = Math.random() > 0.75;
       const amountRounded = Math.round(amountMYR * 100) / 100;
-      const exchangeRateMYRtoUSD = 0.22; // 1 MYR ≈ 0.22 USD (or 1 USD ≈ 4.5 MYR)
       const amountInBaseUSD =
-        Math.round(amountRounded * exchangeRateMYRtoUSD * 100) / 100;
+        Math.round(amountRounded * MYR_TO_USD_RATE * 100) / 100;
 
       transactions.push({
         id: uuid(),
@@ -251,7 +290,7 @@ async function seed() {
         amount: amountRounded,
         amountInBase: amountInBaseUSD,
         currency: "MYR",
-        exchangeRate: exchangeRateMYRtoUSD,
+        exchangeRate: MYR_TO_USD_RATE,
         description: `${merchant} purchase`,
         merchantName: merchant,
         isRecurring:
@@ -265,25 +304,26 @@ async function seed() {
       });
     }
 
-    // Add 1-2 income transactions per month (in MYR)
+    // Add income transactions per month (in MYR)
+    // Salary on 1st, freelance on 15th
     for (let i = 0; i < 2; i++) {
       const day = i === 0 ? 1 : 15;
-      const amountMYR = i === 0 ? 15750 : 2250; // ~RM 15,750 ($3,500) salary, ~RM 2,250 ($500) freelance
-      const exchangeRateMYRtoUSD = 0.22; // 1 MYR ≈ 0.22 USD
+      const amountMYR = i === 0 ? 7500 : 1200; // RM 7,500 (~$1,678) salary, RM 1,200 (~$268) freelance
       const amountInBaseUSD =
-        Math.round(amountMYR * exchangeRateMYRtoUSD * 100) / 100;
+        Math.round(amountMYR * MYR_TO_USD_RATE * 100) / 100;
 
       transactions.push({
         id: uuid(),
         userId: user.id,
-        accountId: accounts[0].id,
+        accountId: accounts[0].id, // Salary goes to Maybank
         type: TransactionType.INCOME,
         category: TransactionCategory.INCOME,
         amount: amountMYR,
         amountInBase: amountInBaseUSD,
         currency: "MYR",
-        exchangeRate: exchangeRateMYRtoUSD,
-        description: i === 0 ? "Salary" : "Freelance Income",
+        exchangeRate: MYR_TO_USD_RATE,
+        description: i === 0 ? "Monthly Salary" : "Freelance Project Payment",
+        merchantName: i === 0 ? "Company ABC Sdn Bhd" : "Freelance Client",
         isRecurring: true,
         isEcoFriendly: false,
         transactionDate: new Date(

@@ -12,7 +12,6 @@ import {
 } from '../../domain/entities/Nudge.js';
 import { TransactionType, TransactionCategory } from '../../domain/entities/Transaction.js';
 import { DateRange } from '../../domain/value-objects/DateRange.js';
-import { Money } from '../../domain/value-objects/Money.js';
 import {
     INudgeRepository,
     NUDGE_REPOSITORY
@@ -20,7 +19,6 @@ import {
 import {
     ITransactionRepository,
     TRANSACTION_REPOSITORY,
-    CategorySpending,
 } from '../../domain/repositories/ITransactionRepository.js';
 import { Logger } from '../../shared/Logger.js';
 
@@ -44,7 +42,6 @@ export interface GeneratedNudge {
 @injectable()
 export class NudgesEngine {
     private readonly SPENDING_INCREASE_THRESHOLD = 20; // 20%
-    private readonly BUDGET_WARNING_THRESHOLD = 80; // 80% of average
     private readonly ECO_FRIENDLY_GOAL = 30; // 30% eco transactions
 
     constructor(

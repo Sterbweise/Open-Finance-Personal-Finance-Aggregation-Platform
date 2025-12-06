@@ -28,7 +28,7 @@ model User {
   city              String?
   state             String?
   country           String?
-  preferredCurrency String    @default("USD")
+  preferredCurrency String    @default("MYR")
   locale            String    @default("en-US")
   isActive          Boolean   @default(true)
   isEmailVerified   Boolean   @default(false)

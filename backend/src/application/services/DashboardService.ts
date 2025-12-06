@@ -15,7 +15,7 @@ import {
     ACCOUNT_REPOSITORY
 } from '../../domain/repositories/IAccountRepository.js';
 import { TransactionType, TransactionCategory } from '../../domain/entities/Transaction.js';
-import { Account, Provider } from '../../domain/entities/Account.js';
+import { Provider } from '../../domain/entities/Account.js';
 import { DateRange } from '../../domain/value-objects/DateRange.js';
 import { Money } from '../../domain/value-objects/Money.js';
 import { Logger } from '../../shared/Logger.js';
@@ -200,7 +200,7 @@ export class DashboardService {
     /**
      * Get spending trends over time
      */
-    async getSpendingTrends(userId: string, baseCurrency: string = 'USD'): Promise<SpendingTrends> {
+    async getSpendingTrends(userId: string, _baseCurrency: string = 'USD'): Promise<SpendingTrends> {
         const sixMonths = DateRange.lastMonths(6);
         const history = await this.transactionRepo.getMonthlySpending(
             userId,
@@ -299,7 +299,7 @@ export class DashboardService {
      */
     async getRecentActivity(
         userId: string,
-        baseCurrency: string = 'USD',
+        _baseCurrency: string = 'USD',
         limit: number = 10
     ): Promise<DashboardData['recentActivity']> {
         const transactions = await this.transactionRepo.findByUserId(userId, { limit, offset: 0 });

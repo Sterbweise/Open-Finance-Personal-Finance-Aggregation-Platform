@@ -11,11 +11,11 @@ export type Currency = "USD" | "MYR" | "SGD" | "EUR" | "GBP" | "JPY" | "NGN";
 // Used when external API is unavailable
 export const FALLBACK_RATES: Record<Currency, number> = {
   USD: 1.0,
-  MYR: 4.47,
-  SGD: 1.34,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 149.5,
+  MYR: 4.1114,
+  SGD: 1.2956,
+  EUR: 0.8586,
+  GBP: 0.7497,
+  JPY: 155.2105,
   NGN: 850,
 };
 
@@ -58,19 +58,34 @@ export function getFallbackRate(from: string, to: string): number {
 }
 
 /**
- * Convert an amount from one currency to another
- * @param amount The amount to convert
- * @param fromCurrency Source currency code
- * @param toCurrency Target currency code
+ * Convert an amount from one currency to another.
+ * You can pass a rates map (e.g., the `conversion_rates` returned by the
+ * exchangerate-api v6 endpoint). If no rates are provided, falls back to the
+ * static fallback table.
+ *
+ * @param amount        The amount to convert
+ * @param fromCurrency  Source currency code
+ * @param toCurrency    Target currency code
+ * @param rates         Optional map of rates relative to the base currency (USD)
  * @returns Converted amount rounded to 2 decimal places
  */
 export function convertAmount(
   amount: number,
   fromCurrency: string,
-  toCurrency: string
+  toCurrency: string,
+  rates?: Record<string, number>
 ): number {
   if (fromCurrency === toCurrency) return amount;
 
+  // Prefer provided live rates (conversion_rates from API), otherwise fallback
+  if (rates && rates[fromCurrency] && rates[toCurrency]) {
+    const fromRate = rates[fromCurrency];
+    const toRate = rates[toCurrency];
+    const converted = (amount / fromRate) * toRate;
+    return Math.round(converted * 100) / 100;
+  }
+
+  // Fallback table (static)
   const rate = getFallbackRate(fromCurrency, toCurrency);
   return Math.round(amount * rate * 100) / 100;
 }
@@ -92,4 +107,3 @@ export function convertMoney(money: MoneyDTO, toCurrency: string): MoneyDTO {
     currency: toCurrency,
   };
 }
-

@@ -1,9 +1,9 @@
-# Open Finance Platform - Architecture Overview
+# MyDuit - Architecture Overview
 
 ## Exchange Rate & Currency Management
 
 ### Overview
-This document explains how currency conversion and exchange rates work in the Open Finance Platform.
+This document explains how currency conversion and exchange rates work in the MyDuit.
 
 ---
 

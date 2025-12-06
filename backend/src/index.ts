@@ -102,7 +102,7 @@ app.get("/api/v1/dashboard", async (_req, res) => {
 
     const ecoFriendlyCount = transactions.filter((t) => t.isEcoFriendly).length;
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         overview: {
@@ -173,7 +173,9 @@ app.get("/api/v1/dashboard", async (_req, res) => {
     });
   } catch (error) {
     logger.error("Dashboard error", { error });
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 });
 
@@ -198,7 +200,7 @@ app.get("/api/v1/transactions", async (req, res) => {
       prisma.transaction.count({ where: { userId: user.id } }),
     ]);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactions: transactions.map((t) => ({
@@ -216,7 +218,9 @@ app.get("/api/v1/transactions", async (req, res) => {
     });
   } catch (error) {
     logger.error("Transactions error", { error });
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 });
 
@@ -239,7 +243,7 @@ app.get("/api/v1/accounts", async (_req, res) => {
       return sum + convertAmount(acc.balance, acc.currency, baseCurrency);
     }, 0);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         accounts: accounts.map((a) => {
@@ -280,7 +284,9 @@ app.get("/api/v1/accounts", async (_req, res) => {
     });
   } catch (error) {
     logger.error("Accounts error", { error });
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 });
 

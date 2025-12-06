@@ -6,7 +6,7 @@
 /**
  * Supported currencies across the platform
  */
-export type Currency = 'USD' | 'MYR' | 'SGD' | 'EUR' | 'GBP' | 'JPY' | 'NGN';
+export type Currency = "USD" | "MYR" | "SGD" | "EUR" | "GBP" | "JPY" | "NGN";
 
 /**
  * Currency metadata
@@ -47,26 +47,26 @@ export interface MoneyValue {
  * Supported currencies with their metadata
  */
 export const SUPPORTED_CURRENCIES: CurrencyInfo[] = [
-  { code: 'USD', name: 'US Dollar', symbol: '$', locale: 'en-US' },
-  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', locale: 'ms-MY' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', locale: 'en-SG' },
-  { code: 'EUR', name: 'Euro', symbol: '€', locale: 'de-DE' },
-  { code: 'GBP', name: 'British Pound', symbol: '£', locale: 'en-GB' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', locale: 'ja-JP' },
-  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', locale: 'en-NG' },
+  { code: "USD", name: "US Dollar", symbol: "$", locale: "en-US" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", locale: "ms-MY" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$", locale: "en-SG" },
+  { code: "EUR", name: "Euro", symbol: "€", locale: "de-DE" },
+  { code: "GBP", name: "British Pound", symbol: "£", locale: "en-GB" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥", locale: "ja-JP" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦", locale: "en-NG" },
 ];
 
 /**
  * Currency symbols mapping
  */
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  USD: '$',
-  MYR: 'RM',
-  SGD: 'S$',
-  EUR: '€',
-  GBP: '£',
-  JPY: '¥',
-  NGN: '₦',
+  USD: "$",
+  MYR: "RM",
+  SGD: "S$",
+  EUR: "€",
+  GBP: "£",
+  JPY: "¥",
+  NGN: "₦",
 };
 
 /**
@@ -75,11 +75,11 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
  */
 export const FALLBACK_RATES: Record<Currency, number> = {
   USD: 1.0,
-  MYR: 4.47,
-  SGD: 1.34,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 149.5,
+  MYR: 4.1114,
+  SGD: 1.2956,
+  EUR: 0.8586,
+  GBP: 0.7497,
+  JPY: 155.2105,
   NGN: 850,
 };
 
@@ -96,4 +96,3 @@ export function isValidCurrency(code: string): code is Currency {
 export function getCurrencyInfo(code: Currency): CurrencyInfo | undefined {
   return SUPPORTED_CURRENCIES.find((c) => c.code === code);
 }
-

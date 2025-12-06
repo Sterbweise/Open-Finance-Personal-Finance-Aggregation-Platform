@@ -4,13 +4,12 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { injectable, inject } from 'tsyringe';
+import { injectable } from 'tsyringe';
 import { DashboardService } from '../../application/services/DashboardService.js';
 import { TransactionAggregationService } from '../../application/services/TransactionAggregationService.js';
 import { NudgesEngine } from '../../application/services/NudgesEngine.js';
 import { SustainabilityService } from '../../application/services/SustainabilityService.js';
 import { DateRange } from '../../domain/value-objects/DateRange.js';
-import { Logger } from '../../shared/Logger.js';
 
 export interface AuthenticatedRequest extends Request {
     userId?: string;
@@ -19,8 +18,6 @@ export interface AuthenticatedRequest extends Request {
 
 @injectable()
 export class DashboardController {
-    private logger = new Logger('DashboardController');
-
     constructor(
         private dashboardService: DashboardService,
         private aggregationService: TransactionAggregationService,

@@ -13,7 +13,7 @@ import {
     CategorySpending,
     MonthlySpending,
 } from '../../../domain/repositories/ITransactionRepository.js';
-import { Transaction, TransactionType, TransactionCategory, TransactionProps } from '../../../domain/entities/Transaction.js';
+import { Transaction, TransactionType, TransactionCategory } from '../../../domain/entities/Transaction.js';
 import { DateRange } from '../../../domain/value-objects/DateRange.js';
 
 @injectable()

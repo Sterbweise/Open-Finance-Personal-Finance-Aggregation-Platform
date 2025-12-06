@@ -76,6 +76,8 @@ interface SettingsContextType {
 // API key should be set in .env.local file as NEXT_PUBLIC_EXCHANGE_RATE_API_KEY
 const EXCHANGE_RATE_API_KEY =
   process.env.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY || "";
+
+// Prefer paid v6 endpoint when key is present; otherwise fall back to free v4
 const EXCHANGE_RATE_API = EXCHANGE_RATE_API_KEY
   ? `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/USD`
   : "https://api.exchangerate-api.com/v4/latest/USD"; // Fallback to free API
