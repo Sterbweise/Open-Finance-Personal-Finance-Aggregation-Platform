@@ -13,6 +13,7 @@ import {
   ExchangeRate,
   SUPPORTED_CURRENCIES,
   FALLBACK_RATES,
+  isValidCurrency,
 } from "../../../../shared/types/currency.js";
 
 // Re-export for backward compatibility
@@ -73,8 +74,18 @@ export class CurrencyService {
   }
 
   private getFallbackRate(from: string, to: string): number {
-    const fromToUsd = FALLBACK_RATES[from as Currency] ?? 1;
-    const toToUsd = FALLBACK_RATES[to as Currency] ?? 1;
+    // Validate currencies before using fallback rates
+    if (!isValidCurrency(from)) {
+      this.logger.warn(`Invalid source currency: ${from}, defaulting to USD`);
+      from = "USD";
+    }
+    if (!isValidCurrency(to)) {
+      this.logger.warn(`Invalid target currency: ${to}, defaulting to USD`);
+      to = "USD";
+    }
+
+    const fromToUsd = FALLBACK_RATES[from as Currency];
+    const toToUsd = FALLBACK_RATES[to as Currency];
     return (1 / fromToUsd) * toToUsd;
   }
 
