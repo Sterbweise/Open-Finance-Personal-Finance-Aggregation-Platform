@@ -1,7 +1,7 @@
 {
-  "name": "open-finance-backend",
+  "name": "myduit-backend",
   "version": "1.0.0",
-  "description": "Personal Finance Aggregation Platform Backend with Clean Architecture",
+  "description": "MyDuit - Personal Finance Aggregation Platform Backend with Clean Architecture",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

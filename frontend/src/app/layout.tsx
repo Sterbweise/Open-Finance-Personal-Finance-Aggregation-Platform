@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-    title: 'Open Finance - Personal Finance Dashboard',
+    title: 'MyDuit - Personal Finance Dashboard',
     description: 'Aggregate your e-wallets and bank accounts in one beautiful dashboard',
 };
 

@@ -76,7 +76,7 @@ export function Sidebar() {
                     <div className="sidebar-logo">
                         <Wallet size={28} className="logo-icon" />
                         {!isSidebarCollapsed && (
-                            <span className="logo-text">Open Finance</span>
+                            <span className="logo-text">MyDuit</span>
                         )}
                     </div>
 

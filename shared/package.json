@@ -1,14 +1,14 @@
 {
-  "name": "@openfinance/shared-types",
+  "name": "@myduit/shared-types",
   "version": "1.0.0",
-  "description": "Shared types for Open Finance Platform",
+  "description": "Shared types for MyDuit Platform",
   "main": "types/index.ts",
   "types": "types/index.ts",
   "scripts": {
     "type-check": "tsc --noEmit"
   },
   "keywords": ["types", "shared", "typescript"],
-  "author": "Open Finance Team",
+  "author": "MyDuit Team",
   "license": "MIT"
 }
 

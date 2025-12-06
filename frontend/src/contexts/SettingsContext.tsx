@@ -92,7 +92,7 @@ const defaultPreferences: UserPreferences = {
 
 const defaultProfile: UserProfile = {
   id: "1",
-  email: "demo@openfinance.my",
+  email: "demo@myduit.my",
   username: "demo_user",
   firstName: "Ahmad",
   lastName: "Rahman",
