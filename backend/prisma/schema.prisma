@@ -1,0 +1,262 @@
+// Prisma Schema for Open Finance Personal Finance Aggregation Platform
+// SQLite version (enums converted to strings)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  passwordHash      String
+  firstName         String?
+  lastName          String?
+  avatarUrl         String?
+  dateOfBirth       DateTime?
+  phoneNumber       String?
+  address           String?
+  city              String?
+  state             String?
+  country           String?
+  preferredCurrency String    @default("USD")
+  locale            String    @default("en-US")
+  isActive          Boolean   @default(true)
+  isEmailVerified   Boolean   @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  accounts              Account[]
+  transactions          Transaction[]
+  nudges                UserNudge[]
+  notifications         Notification[]
+  userPreferences       UserPreference?
+  sustainabilityMetrics SustainabilityMetric[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model UserPreference {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  enableNudges         Boolean  @default(true)
+  enableSustainability Boolean  @default(true)
+  enableNotifications  Boolean  @default(true)
+  budgetAlertThreshold Float    @default(80.0)
+  spendingWarningDays  Int      @default(7)
+  darkMode             Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// ACCOUNT & WALLET MANAGEMENT
+// ============================================
+
+model Account {
+  id            String    @id @default(uuid())
+  userId        String
+  externalId    String?
+  name          String
+  accountType   String    @default("SAVINGS") // SAVINGS, CURRENT, EWALLET, CREDIT_CARD
+  provider      String    @default("BANK") // BANK, GRABPAY, TNG, SHOPEEPAY, VIRTUAL_BANK, MANUAL
+  accountNumber String?
+  balance       Float     @default(0.0)
+  currency      String    @default("USD")
+  isActive      Boolean   @default(true)
+  lastSyncedAt  DateTime?
+  metadata      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      Transaction[] @relation("AccountTransactions")
+  sentTransfers     Transaction[] @relation("PayerAccount")
+  receivedTransfers Transaction[] @relation("PayeeAccount")
+  debitCards        DebitCard[]
+
+  @@unique([userId, provider, accountNumber])
+  @@index([userId])
+  @@index([provider])
+}
+
+model DebitCard {
+  id              String   @id @default(uuid())
+  accountId       String
+  cardNumber      String
+  cardholderName  String?
+  expirationMonth Int
+  expirationYear  Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+
+model Transaction {
+  id               String   @id @default(uuid())
+  userId           String
+  accountId        String
+  payerId          String?
+  payeeId          String?
+  externalId       String?
+  type             String   @default("EXPENSE") // INCOME, EXPENSE, TRANSFER, DEPOSIT, WITHDRAWAL
+  category         String   @default("OTHER") // FOOD_DINING, GROCERIES, etc.
+  subCategory      String?
+  amount           Float
+  amountInBase     Float
+  currency         String   @default("USD")
+  exchangeRate     Float    @default(1.0)
+  description      String?
+  merchantName     String?
+  merchantCategory String?
+  isRecurring      Boolean  @default(false)
+  isEcoFriendly    Boolean  @default(false)
+  ecoScore         Float?
+  ecoTags          String?
+  metadata         String?
+  transactionDate  DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account              Account               @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+  payerAccount         Account?              @relation("PayerAccount", fields: [payerId], references: [id])
+  payeeAccount         Account?              @relation("PayeeAccount", fields: [payeeId], references: [id])
+  sustainabilityImpact SustainabilityImpact?
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([category])
+  @@index([transactionDate])
+  @@index([type])
+}
+
+// ============================================
+// BEHAVIOURAL NUDGES
+// ============================================
+
+model Nudge {
+  id              String  @id @default(uuid())
+  type            String // SPENDING_INCREASE, SPENDING_DECREASE, etc.
+  category        String?
+  title           String
+  messageTemplate String
+  severity        String  @default("INFO") // INFO, WARNING, ALERT, SUCCESS
+  threshold       Float?
+  isActive        Boolean @default(true)
+  priority        Int     @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userNudges UserNudge[]
+}
+
+model UserNudge {
+  id          String    @id @default(uuid())
+  userId      String
+  nudgeId     String
+  message     String
+  data        String?
+  isRead      Boolean   @default(false)
+  isDismissed Boolean   @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nudge Nudge @relation(fields: [nudgeId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+// ============================================
+// SUSTAINABILITY METRICS
+// ============================================
+
+model SustainabilityImpact {
+  id              String   @id @default(uuid())
+  transactionId   String   @unique
+  carbonFootprint Float?
+  ecoScore        Float
+  impactCategory  String
+  suggestions     String?
+  createdAt       DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model SustainabilityMetric {
+  id                   String   @id @default(uuid())
+  userId               String
+  periodStart          DateTime
+  periodEnd            DateTime
+  totalCarbonFootprint Float    @default(0.0)
+  averageEcoScore      Float    @default(0.0)
+  ecoFriendlyCount     Int      @default(0)
+  totalTransactions    Int      @default(0)
+  topImpactCategories  String?
+  createdAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([periodStart, periodEnd])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   @default("USER") // USER, TRANSACTION, ACCOUNT, SECURITY, NUDGE, SYSTEM
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+// ============================================
+// ANALYTICS CACHE
+// ============================================
+
+model AnalyticsCache {
+  id        String   @id @default(uuid())
+  userId    String
+  cacheKey  String
+  data      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, cacheKey])
+  @@index([expiresAt])
+}
